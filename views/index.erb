@@ -1,0 +1,101 @@
+    <h1>RuboMote</h1>
+
+    <% if @player.playing? %>
+      <h4><em><%= "#{@player.current_track.name} - #{@player.current_track.artist}" %></em></h4>
+    <% end %>
+
+    <p>
+      <table class="table">
+        <tr>
+          <td></td>
+          <td>
+            <a class="btn btn-inverse btn-default btn-lg" id="volume_up">
+              <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span>
+            </a>
+          </td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td>
+            <a class="btn btn-lg btn-primary" id="action_prev_track" role="button">
+              <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
+            </a>
+          </td>
+          <td>
+
+            <a class="btn btn-lg btn-danger" id="action_pause" role="button">
+              <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+            </a>
+
+            <a class="btn btn-lg btn-danger" id="action_play" role="button">
+              <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+            </a>
+
+          </td>
+          <td>
+            <a class="btn btn-lg btn-primary" id="action_next_track" role="button">
+              <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
+            </a>
+          </td>
+        </tr>
+
+        <tr>
+          <td></td>
+          <td>
+            <a class="btn btn-inverse btn-default btn-lg" id="volume_down">
+              <span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span>
+            </a>
+          </td>
+          <td></td>
+        </tr>
+      </table>
+
+      <% volume_value = @volume_control.value %>
+
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="<%= volume_value %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= volume_value %>%;">
+          Volume <%= volume_value %>%
+        </div>
+      </div>
+    </p>
+
+<script>
+  $(document).ready(function(){
+    $("#action_pause").click(function(){
+      $.get("/action/pause", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+
+    $("#action_play").click(function(){
+      $.get("/action/play", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+
+    $("#action_next_track").click(function(){
+      $.get("/action/next_track", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+
+    $("#action_prev_track").click(function(){
+      $.get("/action/prev_track", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+
+    $("#volume_up").click(function(){
+      $.get("/volume/up", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+
+    $("#volume_down").click(function(){
+      $.get("/volume/down", function(data, status){
+        //alert("Data: " + data + "\nStatus: " + status);
+      });
+    });
+  });
+</script>
