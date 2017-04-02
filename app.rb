@@ -40,8 +40,6 @@ post '/login' do
   if pin == settings.secret_pin
     session[:pin] = pin
     redirect '/'
-  else
-    redirect '/login'
   end
 end
 
@@ -49,6 +47,20 @@ get '/' do
   authenticate!
 
   erb :index
+end
+
+get '/artist' do
+  authenticate!
+
+  if @player.playing?
+    "#{@player.current_track.name} - #{@player.current_track.artist}"
+  end
+end
+
+get '/volume' do
+  authenticate!
+
+  "#{@volume_control.value}"
 end
 
 get '/volume/:volume' do

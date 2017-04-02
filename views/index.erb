@@ -1,8 +1,6 @@
     <h1>RuboMote</h1>
 
-    <% if @player.playing? %>
-      <h4><em><%= "#{@player.current_track.name} - #{@player.current_track.artist}" %></em></h4>
-    <% end %>
+    <h4><em><span id="track_info"></span></em></h4>
 
     <p>
       <table class="table">
@@ -24,7 +22,7 @@
           </td>
           <td>
 
-            <a class="btn btn-lg btn-danger" id="action_pause" role="button">
+            <a class="btn btn-lg btn-danger" id="action_pause" role="button" style="display: none;">
               <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
             </a>
 
@@ -51,50 +49,94 @@
         </tr>
       </table>
 
-      <% volume_value = @volume_control.value %>
-
       <div class="progress">
-        <div class="progress-bar" role="progressbar" aria-valuenow="<%= volume_value %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= volume_value %>%;">
-          Volume <%= volume_value %>%
+        <div id="volume_value" class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+          Volume 100%
         </div>
       </div>
     </p>
 
 <script>
   $(document).ready(function(){
+    // check if player is playing a song in that case get info about the track
+    $.get("/artist", function(data, status) {
+      $('#track_info').html(data);
+
+      if (data != "") {
+        $("#action_pause").show();
+        $("#action_play").hide();
+      }
+    });
+
+    $.get("/volume", function(data, status) {
+      $("#volume_value").attr("aria-valuenow", data);
+      $("#volume_value").attr("style", "width: " + data + "%;");
+      $("#volume_value").html("Volume: " + data + "%");
+    });
+
     $("#action_pause").click(function(){
       $.get("/action/pause", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $("#action_pause").hide();
+        $("#action_play").show();
       });
     });
 
     $("#action_play").click(function(){
       $.get("/action/play", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $.get("/artist", function(data, status) {
+          $('#track_info').html(data);
+        });
+
+        $("#action_pause").show();
+        $("#action_play").hide();
       });
     });
 
     $("#action_next_track").click(function(){
       $.get("/action/next_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $.get("/artist", function(data, status) {
+          $('#track_info').html(data);
+        });
       });
     });
 
     $("#action_prev_track").click(function(){
       $.get("/action/prev_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $.get("/artist", function(data, status) {
+          $('#track_info').html(data);
+        });
       });
     });
 
     $("#volume_up").click(function(){
       $.get("/volume/up", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $.get("/volume", function(data, status) {
+          $("#volume_value").attr("aria-valuenow", data);
+          $("#volume_value").attr("style", "width: " + data + "%;");
+          $("#volume_value").html("Volume: " + data + "%");
+        });
       });
     });
 
     $("#volume_down").click(function(){
       $.get("/volume/down", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
+
+        $.get("/volume", function(data, status) {
+          $("#volume_value").attr("aria-valuenow", data);
+          $("#volume_value").attr("style", "width: " + data + "%;");
+          $("#volume_value").html("Volume: " + data + "%");
+        });
       });
     });
   });
