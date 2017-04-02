@@ -57,14 +57,23 @@
     </p>
 
 <script>
+  function is_playing(playing) {
+    if (playing) {
+      $("#action_pause").show();
+      $("#action_play").hide();
+    } else {
+      $("#action_pause").hide();
+      $("#action_play").show();
+    }
+  }
+
   $(document).ready(function(){
     // check if player is playing a song in that case get info about the track
     $.get("/artist", function(data, status) {
       $('#track_info').html(data);
 
       if (data != "") {
-        $("#action_pause").show();
-        $("#action_play").hide();
+        is_playing(true);
       }
     });
 
@@ -74,12 +83,13 @@
       $("#volume_value").html("Volume: " + data + "%");
     });
 
+    // button events
+
     $("#action_pause").click(function(){
       $.get("/action/pause", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $("#action_pause").hide();
-        $("#action_play").show();
+        is_playing(false);
       });
     });
 
@@ -87,12 +97,8 @@
       $.get("/action/play", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $.get("/artist", function(data, status) {
-          $('#track_info').html(data);
-        });
-
-        $("#action_pause").show();
-        $("#action_play").hide();
+        $('#track_info').html(data);
+        is_playing(true);
       });
     });
 
@@ -100,9 +106,8 @@
       $.get("/action/next_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $.get("/artist", function(data, status) {
-          $('#track_info').html(data);
-        });
+        $('#track_info').html(data);
+        is_playing(true);
       });
     });
 
@@ -110,9 +115,8 @@
       $.get("/action/prev_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $.get("/artist", function(data, status) {
-          $('#track_info').html(data);
-        });
+        $('#track_info').html(data);
+        is_playing(true);
       });
     });
 
@@ -120,11 +124,9 @@
       $.get("/volume/up", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $.get("/volume", function(data, status) {
-          $("#volume_value").attr("aria-valuenow", data);
-          $("#volume_value").attr("style", "width: " + data + "%;");
-          $("#volume_value").html("Volume: " + data + "%");
-        });
+        $("#volume_value").attr("aria-valuenow", data);
+        $("#volume_value").attr("style", "width: " + data + "%;");
+        $("#volume_value").html("Volume: " + data + "%");
       });
     });
 
@@ -132,11 +134,9 @@
       $.get("/volume/down", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $.get("/volume", function(data, status) {
-          $("#volume_value").attr("aria-valuenow", data);
-          $("#volume_value").attr("style", "width: " + data + "%;");
-          $("#volume_value").html("Volume: " + data + "%");
-        });
+        $("#volume_value").attr("aria-valuenow", data);
+        $("#volume_value").attr("style", "width: " + data + "%;");
+        $("#volume_value").html("Volume: " + data + "%");
       });
     });
   });

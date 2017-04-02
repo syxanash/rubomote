@@ -68,6 +68,8 @@ get '/volume/:volume' do
 
   volume = params[:volume]
   @volume_control.send(volume)
+
+  "#{@volume_control.value}"
 end
 
 get '/action/:action' do
@@ -75,4 +77,8 @@ get '/action/:action' do
 
   action = params[:action]
   @player.send(action)
+
+  if @player.playing?
+    "#{@player.current_track.name} - #{@player.current_track.artist}"
+  end
 end
