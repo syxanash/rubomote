@@ -1,10 +1,10 @@
     <h1>RuboMote</h1>
 
-    <h4>Enter the 4 digit PIN generated at runtime:</h4>
+    <h4>Enter the <%= PIN_LENGTH %> digit PIN generated at runtime:</h4>
 
     <p>
       <form action="/login" method="post" class="form-inline">
-      <% 4.times do |field| %>
+      <% PIN_LENGTH.times do |field| %>
         <select class="form-control" name="pin<%= field %>">
         <% 10.times do |digit| %>
           <option><%= digit %></option>

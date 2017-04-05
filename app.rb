@@ -3,9 +3,11 @@ require 'itunes-client'
 
 include Itunes
 
+PIN_LENGTH = 5.freeze
+
 def generate_pin
   secret_pin = String.new
-  4.times { secret_pin += Random.rand(10).to_s }
+  PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
   system("cowsay 'Your secret PIN: #{secret_pin}' | lolcat")
 
   secret_pin
@@ -35,10 +37,14 @@ get '/login' do
 end
 
 post '/login' do
-  pin = [params[:pin0], params[:pin1], params[:pin2], params[:pin3]].join('')
+  entered_pin = ''
 
-  if pin == settings.secret_pin
-    session[:pin] = pin
+  params.each do |key, value|
+    entered_pin += value
+  end
+
+  if entered_pin == settings.secret_pin
+    session[:pin] = entered_pin
     redirect '/'
   end
 end
