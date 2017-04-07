@@ -3,7 +3,7 @@ require 'itunes-client'
 
 include Itunes
 
-PIN_LENGTH = 5.freeze
+PIN_LENGTH = 3.freeze
 
 def generate_pin
   secret_pin = String.new
@@ -15,9 +15,13 @@ end
 
 helpers do
   def authenticate!
-    if session[:pin] != settings.secret_pin
+    if !authenticated?
       redirect '/login'
     end
+  end
+
+  def authenticated?
+    session[:pin] == settings.secret_pin
   end
 end
 
@@ -33,6 +37,10 @@ before do
 end
 
 get '/login' do
+  if authenticated?
+    redirect '/'
+  end
+
   erb :login
 end
 
