@@ -25,16 +25,35 @@ helpers do
   end
 end
 
+not_found do
+  @error_msg = "404 not found!"
+  erb :error
+end
+
+error do
+  @error_msg = env['sinatra.error'].message
+  erb :error
+end
+
 configure do
   enable :sessions
 
+  set :show_exceptions, false
   set :secret_pin, generate_pin
 end
 
+# before executing any routes create two instances of itunes-client
 before do
   @volume_control = Itunes::Volume
   @player = Itunes::Player
 end
+
+# for any routes except /login authentication is required
+before %r{^(?!\/login)} do
+  authenticate!
+end
+
+# main routes
 
 get '/login' do
   if authenticated?
@@ -58,28 +77,20 @@ post '/login' do
 end
 
 get '/' do
-  authenticate!
-
   erb :index
 end
 
-get '/artist' do
-  authenticate!
+get '/volume' do
+  "#{@volume_control.value}"
+end
 
+get '/artist' do
   if @player.playing?
     "#{@player.current_track.name} - #{@player.current_track.artist}"
   end
 end
 
-get '/volume' do
-  authenticate!
-
-  "#{@volume_control.value}"
-end
-
 get '/volume/:volume' do
-  authenticate!
-
   volume = params[:volume]
   @volume_control.send(volume)
 
@@ -87,8 +98,6 @@ get '/volume/:volume' do
 end
 
 get '/action/:action' do
-  authenticate!
-
   action = params[:action]
   @player.send(action)
 
