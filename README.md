@@ -1,8 +1,8 @@
 # rubomote :musical_note:
 
-remotely control iTunes over Wi-Fi using Ruby
+remotely control iTunes over Wi-Fi using Ruby.
 
-## Example
+## Demo
 
 [![rubomote](https://thumbs.gfycat.com/FakeDistantBorderterrier-size_restricted.gif)](https://gfycat.com/FakeDistantBorderterrier)
 
