@@ -3,7 +3,7 @@ require 'itunes-client'
 
 include Itunes
 
-PIN_LENGTH = 3.freeze
+PIN_LENGTH = 5.freeze
 
 def generate_pin
   secret_pin = ''
@@ -21,7 +21,7 @@ helpers do
   end
 
   def authenticated?
-    session[:pin] == settings.secret_pin
+    session[:pin] == settings.session_secret
   end
 end
 
@@ -37,9 +37,8 @@ end
 
 configure do
   enable :sessions
-
+  set :session_secret, generate_pin
   set :show_exceptions, false
-  set :secret_pin, generate_pin
 end
 
 # before executing any routes create two instances of itunes-client
@@ -70,7 +69,7 @@ post '/login' do
     entered_pin += value
   end
 
-  if entered_pin == settings.secret_pin
+  if entered_pin == settings.session_secret
     session[:pin] = entered_pin
     redirect '/'
   end

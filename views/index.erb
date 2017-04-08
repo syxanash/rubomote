@@ -1,7 +1,7 @@
     <div>
       <h4><em><span id="track_info"></span></em></h4>
 
-      <table class="table">
+      <table class="table text-center">
         <tr>
           <td></td>
           <td>
@@ -74,10 +74,7 @@
 
     $.get("/artist", function(data, status) {
       $('#track_info').html(get_90s(data));
-
-      if (data != "") {
-        is_playing(true);
-      }
+      is_playing(data != "");
     });
 
     $.get("/volume", function(data, status) {
@@ -90,16 +87,12 @@
 
     $("#action_pause").click(function(){
       $.get("/action/pause", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         is_playing(false);
       });
     });
 
     $("#action_play").click(function(){
       $.get("/action/play", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         $('#track_info').html(get_90s(data));
         is_playing(true);
       });
@@ -107,8 +100,6 @@
 
     $("#action_next_track").click(function(){
       $.get("/action/next_track", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         $('#track_info').html(get_90s(data));
         is_playing(true);
       });
@@ -116,8 +107,6 @@
 
     $("#action_prev_track").click(function(){
       $.get("/action/prev_track", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         $('#track_info').html(get_90s(data));
         is_playing(true);
       });
@@ -125,8 +114,6 @@
 
     $("#volume_up").click(function(){
       $.get("/volume/up", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         $("#volume_value").attr("aria-valuenow", data);
         $("#volume_value").attr("style", "width: " + data + "%;");
         $("#volume_value").html("Volume: " + data + "%");
@@ -135,8 +122,6 @@
 
     $("#volume_down").click(function(){
       $.get("/volume/down", function(data, status){
-        //alert("Data: " + data + "\nStatus: " + status);
-
         $("#volume_value").attr("aria-valuenow", data);
         $("#volume_value").attr("style", "width: " + data + "%;");
         $("#volume_value").html("Volume: " + data + "%");

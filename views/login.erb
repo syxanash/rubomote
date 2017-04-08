@@ -1,6 +1,6 @@
-    <h4>Enter the <%= PIN_LENGTH %> digit PIN generated at runtime:</h4>
+    <h4>Enter the <%= PIN_LENGTH %> digit PIN shown in the terminal:</h4>
 
-    <p>
+    <div>
       <form action="/login" method="post" class="form-inline">
       <% PIN_LENGTH.times do |field| %>
         <select class="form-control" name="pin<%= field %>">
@@ -12,4 +12,6 @@
 
       <button type="submit" class="btn btn-success btn-sm">Verify</button>
       </form>
-    </p>
+    </div>
+
+    <br>
