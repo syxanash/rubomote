@@ -1,8 +1,8 @@
-    <h1>RuboMote</h1>
+    <h1>Rubomote</h1>
 
-    <h4><em><span id="track_info"></span></em></h4>
+    <div>
+      <h4><em><span id="track_info"></span></em></h4>
 
-    <p>
       <table class="table">
         <tr>
           <td></td>
@@ -54,9 +54,13 @@
           Volume 100%
         </div>
       </div>
-    </p>
+    </div>
 
 <script>
+  function get_90s(title) {
+    return '<marquee scrollamount="10">' + title + '</marquee>';
+  }
+
   function is_playing(playing) {
     if (playing) {
       $("#action_pause").show();
@@ -68,9 +72,10 @@
   }
 
   $(document).ready(function(){
-    // check if player is playing a song in that case get info about the track
+    // when page is loaded for the first time get artist and volume values
+
     $.get("/artist", function(data, status) {
-      $('#track_info').html(data);
+      $('#track_info').html(get_90s(data));
 
       if (data != "") {
         is_playing(true);
@@ -97,7 +102,7 @@
       $.get("/action/play", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $('#track_info').html(data);
+        $('#track_info').html(get_90s(data));
         is_playing(true);
       });
     });
@@ -106,7 +111,7 @@
       $.get("/action/next_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $('#track_info').html(data);
+        $('#track_info').html(get_90s(data));
         is_playing(true);
       });
     });
@@ -115,7 +120,7 @@
       $.get("/action/prev_track", function(data, status){
         //alert("Data: " + data + "\nStatus: " + status);
 
-        $('#track_info').html(data);
+        $('#track_info').html(get_90s(data));
         is_playing(true);
       });
     });

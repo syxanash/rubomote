@@ -6,7 +6,7 @@ include Itunes
 PIN_LENGTH = 3.freeze
 
 def generate_pin
-  secret_pin = String.new
+  secret_pin = ''
   PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
   system("cowsay 'Your secret PIN: #{secret_pin}' | lolcat")
 
