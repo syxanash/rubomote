@@ -50,12 +50,12 @@ before do
   @player = Itunes::Player
 end
 
-=begin
 # for any routes except /login authentication is required
 before %r{^(?!\/login)} do
-  authenticate!
+  if !request.websocket?
+    authenticate!
+  end
 end
-=end
 
 # main routes
 
