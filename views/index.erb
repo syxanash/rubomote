@@ -55,6 +55,28 @@
     </div>
 
 <script>
+  // web socket stuff
+
+  var ws = new WebSocket('ws://' + window.location.host);
+  ws.onopen  = function() { console.log("websocket opened!"); };
+  ws.onclose = function() { console.log("server just went down!"); location.reload(); };
+  ws.onmessage = function(m) {
+    console.log("data received: " + m.data);
+
+    if (m.data == "pause") {
+      is_playing(false);
+    } else if (!isNaN(parseFloat(m.data))) {
+      $("#volume_value").attr("aria-valuenow", m.data);
+      $("#volume_value").attr("style", "width: " + m.data + "%;");
+      $("#volume_value").html("Volume: " + m.data + "%");
+    } else {
+      $('#track_info').html(get_90s(m.data));
+      is_playing(true);
+    }
+  }
+
+  // events
+
   function get_90s(title) {
     return '<marquee scrollamount="10">' + title + '</marquee>';
   }
@@ -86,46 +108,27 @@
     // button events
 
     $("#action_pause").click(function(){
-      $.get("/action/pause", function(data, status){
-        is_playing(false);
-      });
+      ws.send("pause");
     });
 
     $("#action_play").click(function(){
-      $.get("/action/play", function(data, status){
-        $('#track_info').html(get_90s(data));
-        is_playing(true);
-      });
+      ws.send("play");
     });
 
     $("#action_next_track").click(function(){
-      $.get("/action/next_track", function(data, status){
-        $('#track_info').html(get_90s(data));
-        is_playing(true);
-      });
+      ws.send("next_track");
     });
 
     $("#action_prev_track").click(function(){
-      $.get("/action/prev_track", function(data, status){
-        $('#track_info').html(get_90s(data));
-        is_playing(true);
-      });
+      ws.send("prev_track");
     });
 
     $("#volume_up").click(function(){
-      $.get("/volume/up", function(data, status){
-        $("#volume_value").attr("aria-valuenow", data);
-        $("#volume_value").attr("style", "width: " + data + "%;");
-        $("#volume_value").html("Volume: " + data + "%");
-      });
+      ws.send("volume_up");
     });
 
     $("#volume_down").click(function(){
-      $.get("/volume/down", function(data, status){
-        $("#volume_value").attr("aria-valuenow", data);
-        $("#volume_value").attr("style", "width: " + data + "%;");
-        $("#volume_value").html("Volume: " + data + "%");
-      });
+      ws.send("volume_down");
     });
   });
 </script>

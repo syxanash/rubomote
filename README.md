@@ -52,4 +52,6 @@ Unfortunately this app currently works only on Macs due to **itunes-client** lib
 
 ## TODO
 
-* use **websocket** to update changes on the page for all connected clients
+* use websocket open block to acquire artist and volume values
+* write moar commentz
+* fix authentication

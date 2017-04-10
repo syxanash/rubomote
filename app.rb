@@ -1,9 +1,10 @@
 require 'sinatra'
+require 'sinatra-websocket'
 require 'itunes-client'
 
 include Itunes
 
-PIN_LENGTH = 5.freeze
+PIN_LENGTH = 1.freeze
 
 def generate_pin
   secret_pin = ''
@@ -37,6 +38,8 @@ end
 
 configure do
   enable :sessions
+
+  set :sockets, []
   set :session_secret, generate_pin
   set :show_exceptions, false
 end
@@ -47,10 +50,12 @@ before do
   @player = Itunes::Player
 end
 
+=begin
 # for any routes except /login authentication is required
 before %r{^(?!\/login)} do
   authenticate!
 end
+=end
 
 # main routes
 
@@ -76,7 +81,58 @@ post '/login' do
 end
 
 get '/' do
-  erb :index
+  if !request.websocket?
+    erb :index
+  else
+    request.websocket do |ws|
+      @conn = {socket: ws}
+
+      ws.onopen do
+        warn("someone just connected")
+        settings.sockets << @conn
+        EM.next_tick {
+          @conn[:socket].send("hello new user!".to_s)
+        }
+      end
+
+      ws.onmessage do |msg|
+        warn "message received by client is: #{msg}"
+
+        if msg.include? "volume"
+          actual_msg = ''
+
+          if msg =~ %r{^volume_(.*?)$}
+            actual_msg = $1
+          end
+
+          @volume_control.send(actual_msg)
+
+          EM.next_tick {
+            settings.sockets.each do |user|
+              user[:socket].send(@volume_control.value.to_s)
+            end
+          }
+        else
+          @player.send(msg)
+
+          EM.next_tick {
+            settings.sockets.each do |user|
+              if @player.playing?
+                msg = "#{@player.current_track.name} - #{@player.current_track.artist}"
+              end
+
+              user[:socket].send(msg.to_s)
+            end
+          }
+        end
+      end
+
+      ws.onclose do
+        warn("websocket closed by a client!")
+        settings.sockets.delete(ws)
+      end
+    end
+  end
 end
 
 get '/volume' do
