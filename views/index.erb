@@ -5,7 +5,7 @@
         <tr>
           <td></td>
           <td>
-            <a class="btn btn-inverse btn-default btn-lg" id="volume_up">
+            <a class="btn btn-inverse btn-default btn-lg player" id="volume_up">
               <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span>
             </a>
           </td>
@@ -14,23 +14,23 @@
 
         <tr>
           <td>
-            <a class="btn btn-lg btn-primary" id="action_prev_track" role="button">
+            <a class="btn btn-lg btn-primary player" id="prev_track" role="button">
               <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
             </a>
           </td>
           <td>
 
-            <a class="btn btn-lg btn-danger" id="action_pause" role="button" style="display: none;">
+            <a class="btn btn-lg btn-danger player" id="pause" role="button" style="display: none;">
               <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
             </a>
 
-            <a class="btn btn-lg btn-danger" id="action_play" role="button">
+            <a class="btn btn-lg btn-danger player" id="play" role="button">
               <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
             </a>
 
           </td>
           <td>
-            <a class="btn btn-lg btn-primary" id="action_next_track" role="button">
+            <a class="btn btn-lg btn-primary player" id="next_track" role="button">
               <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
             </a>
           </td>
@@ -39,7 +39,7 @@
         <tr>
           <td></td>
           <td>
-            <a class="btn btn-inverse btn-default btn-lg" id="volume_down">
+            <a class="btn btn-inverse btn-default btn-lg player" id="volume_down">
               <span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span>
             </a>
           </td>
@@ -58,18 +58,19 @@
   // web socket stuff
 
   var ws = new WebSocket('ws://' + window.location.host);
-  ws.onopen  = function() { console.log("websocket opened!"); };
-  ws.onclose = function() { console.log("server just went down!"); location.reload(); };
+  ws.onopen  = function() { console.log('successfully connected to WebSocket server!'); };
+  ws.onclose = function() { console.log('WebSocket server went down!'); };
   ws.onmessage = function(m) {
-    console.log("data received: " + m.data);
+    console.log('data received: ' + m.data);
 
-    if (m.data == "pause") {
+    if (m.data == 'pause') {
       is_playing(false);
-    } else if (!isNaN(parseFloat(m.data))) {
-      $("#volume_value").attr("aria-valuenow", m.data);
-      $("#volume_value").attr("style", "width: " + m.data + "%;");
-      $("#volume_value").html("Volume: " + m.data + "%");
+    } else if (isFinite(String(m.data))) { // check if incoming data is a number
+      $('#volume_value').attr('aria-valuenow', m.data);
+      $('#volume_value').attr('style', 'width: ' + m.data + '%;');
+      $('#volume_value').html('Volume ' + m.data + '%');
     } else {
+      // incoming data is a string thus it is interpreted as track name
       $('#track_info').html(get_90s(m.data));
       is_playing(true);
     }
@@ -83,52 +84,19 @@
 
   function is_playing(playing) {
     if (playing) {
-      $("#action_pause").show();
-      $("#action_play").hide();
+      $('#pause').show();
+      $('#play').hide();
     } else {
-      $("#action_pause").hide();
-      $("#action_play").show();
+      $('#pause').hide();
+      $('#play').show();
     }
   }
 
   $(document).ready(function(){
-    // when page is loaded for the first time get artist and volume values
-
-    $.get("/artist", function(data, status) {
-      $('#track_info').html(get_90s(data));
-      is_playing(data != "");
-    });
-
-    $.get("/volume", function(data, status) {
-      $("#volume_value").attr("aria-valuenow", data);
-      $("#volume_value").attr("style", "width: " + data + "%;");
-      $("#volume_value").html("Volume: " + data + "%");
-    });
-
     // button events
 
-    $("#action_pause").click(function(){
-      ws.send("pause");
-    });
-
-    $("#action_play").click(function(){
-      ws.send("play");
-    });
-
-    $("#action_next_track").click(function(){
-      ws.send("next_track");
-    });
-
-    $("#action_prev_track").click(function(){
-      ws.send("prev_track");
-    });
-
-    $("#volume_up").click(function(){
-      ws.send("volume_up");
-    });
-
-    $("#volume_down").click(function(){
-      ws.send("volume_down");
+    $(".player").click(function(){
+      ws.send(this.id);
     });
   });
 </script>

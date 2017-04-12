@@ -52,6 +52,6 @@ Unfortunately this app currently works only on Macs due to **itunes-client** lib
 
 ## TODO
 
-* use websocket open block to acquire artist and volume values
-* write moar commentz
-* fix authentication
+* fix CSRF for websocket authentication
+* add shake events for playing next track
+* add emoji for volume bar or title 🔈

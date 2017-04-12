@@ -24,6 +24,10 @@ helpers do
   def authenticated?
     session[:pin] == settings.session_secret
   end
+
+  def get_track
+    "#{@player.current_track.name} - #{@player.current_track.artist}"
+  end
 end
 
 not_found do
@@ -57,7 +61,7 @@ before %r{^(?!\/login)} do
   end
 end
 
-# main routes
+# routes for login
 
 get '/login' do
   if authenticated?
@@ -77,86 +81,78 @@ post '/login' do
   if entered_pin == settings.session_secret
     session[:pin] = entered_pin
     redirect '/'
+  else
+    redirect '/login'
   end
 end
+
+# main routes
 
 get '/' do
   if !request.websocket?
     erb :index
   else
     request.websocket do |ws|
-      @conn = {socket: ws}
+      conn = {socket: ws}
 
       ws.onopen do
-        warn("someone just connected")
-        settings.sockets << @conn
+        #warn 'someone just connected'
+
+        # when clients connect to the websocket server send
+        # artist, track name and volume value
+
+        settings.sockets << conn
         EM.next_tick {
-          @conn[:socket].send("hello new user!".to_s)
+          if @player.playing?
+            conn[:socket].send(get_track().to_s)
+          end
+
+          conn[:socket].send(@volume_control.value.to_s)
         }
       end
 
       ws.onmessage do |msg|
-        warn "message received by client is: #{msg}"
+        #warn "message received by client is: #{msg}"
 
+        response = msg
+
+        # if the message sent by the client contains the word volume, parse it
+        # and dynamically execute the methods "up" or "down" of the class which
+        # controls the volume
         if msg.include? "volume"
-          actual_msg = ''
+          msg.slice! "volume_"
 
-          if msg =~ %r{^volume_(.*?)$}
-            actual_msg = $1
-          end
+          @volume_control.send(msg)
 
-          @volume_control.send(actual_msg)
-
-          EM.next_tick {
-            settings.sockets.each do |user|
-              user[:socket].send(@volume_control.value.to_s)
-            end
-          }
+          response = @volume_control.value
         else
+          # otherwise dynamically execute method of the class which controls
+          # the player and if the player is currently playing a track
+          # send it to the client
+
           @player.send(msg)
 
-          EM.next_tick {
-            settings.sockets.each do |user|
-              if @player.playing?
-                msg = "#{@player.current_track.name} - #{@player.current_track.artist}"
-              end
+          # if the player is not playing a track the response will be
+          # the string "pause"
 
-              user[:socket].send(msg.to_s)
-            end
-          }
+          if @player.playing?
+            response = get_track()
+          end
         end
+
+        # finally send response to every client connected
+        EM.next_tick {
+          settings.sockets.each do |user|
+            user[:socket].send(response.to_s)
+          end
+        }
       end
 
       ws.onclose do
-        warn("websocket closed by a client!")
+        #warn 'websocket closed by a client!'
+
         settings.sockets.delete(ws)
       end
     end
-  end
-end
-
-get '/volume' do
-  "#{@volume_control.value}"
-end
-
-get '/artist' do
-  if @player.playing?
-    "#{@player.current_track.name} - #{@player.current_track.artist}"
-  end
-end
-
-get '/volume/:volume' do
-  volume = params[:volume]
-  @volume_control.send(volume)
-
-  "#{@volume_control.value}"
-end
-
-get '/action/:action' do
-  action = params[:action]
-  @player.send(action)
-
-  if @player.playing?
-    "#{@player.current_track.name} - #{@player.current_track.artist}"
   end
 end
