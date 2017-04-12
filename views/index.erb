@@ -64,25 +64,25 @@
     console.log('data received: ' + m.data);
 
     if (m.data == 'pause') {
-      is_playing(false);
+      switch_to_play(false);
     } else if (isFinite(String(m.data))) { // check if incoming data is a number
       $('#volume_value').attr('aria-valuenow', m.data);
       $('#volume_value').attr('style', 'width: ' + m.data + '%;');
       $('#volume_value').html('Volume ' + m.data + '%');
     } else {
       // incoming data is a string thus it is interpreted as track name
-      $('#track_info').html(get_90s(m.data));
-      is_playing(true);
+      $('#track_info').html(go_90s(m.data));
+      switch_to_play(true);
     }
   }
 
   // events
 
-  function get_90s(title) {
+  function go_90s(title) {
     return '<marquee scrollamount="10">' + title + '</marquee>';
   }
 
-  function is_playing(playing) {
+  function switch_to_play(playing) {
     if (playing) {
       $('#pause').show();
       $('#play').hide();

@@ -49,9 +49,3 @@ once you've clicked on **Verify** you should be able to control iTunes with your
 * macOS Sierra
 
 Unfortunately this app currently works only on Macs due to **itunes-client** library which uses AppleScript scripts to control iTunes.
-
-## TODO
-
-* fix CSRF for websocket authentication
-* add shake events for playing next track
-* add emoji for volume bar or title 🔈
