@@ -70,11 +70,27 @@
   }
 
   $(document).ready(function(){
+    window.onload = function() {
+      //create a new instance of shake.js.
+      var myShakeEvent = new Shake({
+        threshold: 15
+      });
+      // start listening to device motion
+      myShakeEvent.start();
+      // register a shake event
+      window.addEventListener('shake', shakeEventDidOccur, false);
+      //shake event callback
+      function shakeEventDidOccur () {
+        // when smartphone is shaking go to next track
+        ws.send('next_track');
+      }
+    };
+
     // web socket stuff
 
     var ws = new WebSocket('ws://' + window.location.host + '/auth/<%= Base64.urlsafe_encode64(settings.session_secret) %>');
     ws.onopen  = function() { console.log('successfully connected to WebSocket server!'); };
-    ws.onclose = function() { console.log('WebSocket server went down!'); };
+    ws.onclose = function() { console.log('WebSocket server went down!'); location.reload(); };
     ws.onmessage = function(m) {
       console.log('data received: ' + m.data);
 
@@ -94,7 +110,13 @@
     // button events
 
     $(".player").click(function(){
-      ws.send(this.id);
+      // when clicked volume up button and volume is already to max then do not
+      // send request to the server, same thing for volume down button
+
+      if (!(this.id == 'volume_up' && $('#volume_value').text() == 'Volume 100%') &&
+          !(this.id == 'volume_down' && $('#volume_value').text() == 'Volume 0%')) {
+        ws.send(this.id);
+      }
     });
   });
 </script>
