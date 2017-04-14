@@ -14,23 +14,23 @@
 
         <tr>
           <td>
-            <a class="btn btn-lg btn-primary player" id="prev_track" role="button">
+            <a class="btn btn-lg btn-primary player" id="player_prev_track" role="button">
               <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
             </a>
           </td>
           <td>
 
-            <a class="btn btn-lg btn-danger player" id="pause" role="button" style="display: none;">
+            <a class="btn btn-lg btn-danger player" id="player_pause" role="button" style="display: none;">
               <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
             </a>
 
-            <a class="btn btn-lg btn-danger player" id="play" role="button">
+            <a class="btn btn-lg btn-danger player" id="player_play" role="button">
               <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
             </a>
 
           </td>
           <td>
-            <a class="btn btn-lg btn-primary player" id="next_track" role="button">
+            <a class="btn btn-lg btn-primary player" id="player_next_track" role="button">
               <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
             </a>
           </td>
@@ -61,20 +61,26 @@
 
   function switch_to_play(playing) {
     if (playing) {
-      $('#pause').show();
-      $('#play').hide();
+      $('#player_pause').show();
+      $('#player_play').hide();
 
       // change title
       document.title = 'rubomote 🔈🎶'
     } else {
-      $('#pause').hide();
-      $('#play').show();
+      $('#player_pause').hide();
+      $('#player_play').show();
 
       document.title = 'rubomote 🔈'
     }
   }
 
   $(document).ready(function(){
+
+    // when browser window is on focus request track name and volume
+    window.onfocus = function () {
+      ws.send('status');
+    };
+
     window.onload = function() {
       //create a new instance of shake.js.
       var myShakeEvent = new Shake({

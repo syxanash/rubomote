@@ -5,7 +5,7 @@ require 'base64'
 
 include Itunes
 
-PIN_LENGTH = 1.freeze
+PIN_LENGTH = 5
 
 def generate_pin
   secret_pin = ''
@@ -24,13 +24,13 @@ helpers do
     session[:pin] == settings.session_secret
   end
 
-  def get_track
+  def track_info
     "#{@player.current_track.name} - #{@player.current_track.artist}"
   end
 end
 
 not_found do
-  @error_msg = "404 not found!"
+  @error_msg = '404 not found!'
   erb :error
 end
 
@@ -106,7 +106,7 @@ get '/auth/:secretpin' do
     erb :index
   else
     request.websocket do |ws|
-      conn = {socket: ws}
+      conn = { socket: ws }
 
       ws.onopen do
         #warn 'someone just connected'
@@ -117,7 +117,7 @@ get '/auth/:secretpin' do
         settings.sockets << conn
         EM.next_tick {
           if @player.playing?
-            conn[:socket].send(get_track().to_s)
+            conn[:socket].send(track_info.to_s)
           end
 
           conn[:socket].send(@volume_control.value.to_s)
@@ -132,13 +132,14 @@ get '/auth/:secretpin' do
         # if the message sent by the client contains the word volume, parse it
         # and dynamically execute the methods "up" or "down" of the class which
         # controls the volume
-        if msg.include? "volume"
-          msg.slice! "volume_"
+        if msg.include? 'volume'
+          msg.slice! 'volume_'
 
           @volume_control.send(msg)
 
           response = @volume_control.value
-        else
+        elsif msg.include? 'player'
+          msg.slice! 'player_'
           # otherwise dynamically execute method of the class which controls
           # the player and if the player is currently playing a track
           # send it to the client
@@ -149,16 +150,30 @@ get '/auth/:secretpin' do
           # the string "pause"
 
           if @player.playing?
-            response = get_track()
+            response = track_info
           end
         end
 
-        # finally send response to every client connected
-        EM.next_tick {
-          settings.sockets.each do |user|
-            user[:socket].send(response.to_s)
-          end
-        }
+        # if client needs status of the player send track name and volume vlaue
+        # only to that specific client, otherwise send response to all clients
+        if response == 'status'
+          EM.next_tick {
+            if @player.playing?
+              conn[:socket].send(track_info.to_s)
+            else
+              # if player is not playing a song then set to pause the client player
+              conn[:socket].send('pause'.to_s)
+            end
+
+            conn[:socket].send(@volume_control.value.to_s)
+          }
+        else
+          EM.next_tick {
+            settings.sockets.each do |user|
+              user[:socket].send(response.to_s)
+            end
+          }
+        end
       end
 
       ws.onclose do
