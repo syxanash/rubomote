@@ -63,9 +63,14 @@
     if (playing) {
       $('#pause').show();
       $('#play').hide();
+
+      // change title
+      document.title = 'rubomote 🔈🎶'
     } else {
       $('#pause').hide();
       $('#play').show();
+
+      document.title = 'rubomote 🔈'
     }
   }
 
