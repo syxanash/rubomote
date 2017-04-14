@@ -55,29 +55,6 @@
     </div>
 
 <script>
-  // web socket stuff
-
-  var ws = new WebSocket('ws://' + window.location.host);
-  ws.onopen  = function() { console.log('successfully connected to WebSocket server!'); };
-  ws.onclose = function() { console.log('WebSocket server went down!'); };
-  ws.onmessage = function(m) {
-    console.log('data received: ' + m.data);
-
-    if (m.data == 'pause') {
-      switch_to_play(false);
-    } else if (isFinite(String(m.data))) { // check if incoming data is a number
-      $('#volume_value').attr('aria-valuenow', m.data);
-      $('#volume_value').attr('style', 'width: ' + m.data + '%;');
-      $('#volume_value').html('Volume ' + m.data + '%');
-    } else {
-      // incoming data is a string thus it is interpreted as track name
-      $('#track_info').html(go_90s(m.data));
-      switch_to_play(true);
-    }
-  }
-
-  // events
-
   function go_90s(title) {
     return '<marquee scrollamount="10">' + title + '</marquee>';
   }
@@ -93,6 +70,27 @@
   }
 
   $(document).ready(function(){
+    // web socket stuff
+
+    var ws = new WebSocket('ws://' + window.location.host + '/auth/<%= Base64.urlsafe_encode64(settings.session_secret) %>');
+    ws.onopen  = function() { console.log('successfully connected to WebSocket server!'); };
+    ws.onclose = function() { console.log('WebSocket server went down!'); };
+    ws.onmessage = function(m) {
+      console.log('data received: ' + m.data);
+
+      if (m.data == 'pause') {
+        switch_to_play(false);
+      } else if (isFinite(String(m.data))) { // check if incoming data is a number
+        $('#volume_value').attr('aria-valuenow', m.data);
+        $('#volume_value').attr('style', 'width: ' + m.data + '%;');
+        $('#volume_value').html('Volume ' + m.data + '%');
+      } else {
+        // incoming data is a string thus it is interpreted as track name
+        $('#track_info').html(go_90s(m.data));
+        switch_to_play(true);
+      }
+    }
+
     // button events
 
     $(".player").click(function(){

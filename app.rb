@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'sinatra-websocket'
 require 'itunes-client'
+require 'base64'
 
 include Itunes
 
@@ -16,9 +17,7 @@ end
 
 helpers do
   def authenticate!
-    if !authenticated?
-      redirect '/login'
-    end
+    redirect '/login' unless authenticated?
   end
 
   def authenticated?
@@ -54,18 +53,16 @@ before do
   @player = Itunes::Player
 end
 
-# for any routes except /login authentication is required
-before %r{^(?!\/login)} do
-  if !request.websocket?
-    authenticate!
-  end
+# for any routes except /login and /errors/* authentication is required
+before %r{^(?!\/login|\/errors/.)} do
+  authenticate! unless request.websocket?
 end
 
 # routes for login
 
 get '/login' do
   if authenticated?
-    redirect '/'
+    redirect "/auth/#{Base64.urlsafe_encode64(session[:pin])}"
   end
 
   erb :login
@@ -80,16 +77,32 @@ post '/login' do
 
   if entered_pin == settings.session_secret
     session[:pin] = entered_pin
-    redirect '/'
+    redirect "/auth/#{Base64.urlsafe_encode64(entered_pin)}"
   else
-    redirect '/login'
+    redirect '/errors/wrongpin'
   end
 end
 
 # main routes
 
 get '/' do
+  redirect '/login'
+end
+
+get '/auth/:secretpin' do
+  # check if secret pin from url is encoded in base 64
+  begin
+    actual_pin = Base64.urlsafe_decode64(params[:secretpin])
+  rescue ArgumentError
+    redirect '/errors/wrongformat'
+  end
+
   if !request.websocket?
+    # if pin in url is different from session pin redirect to login
+    if actual_pin != session[:pin]
+      redirect '/errors/authenticate'
+    end
+
     erb :index
   else
     request.websocket do |ws|
@@ -155,4 +168,22 @@ get '/' do
       end
     end
   end
+end
+
+# error routes
+
+get '/errors/:msg' do
+  error_messages = {
+    'authenticate' => 'Authentication required!',
+    'wrongpin' => 'Wrong PIN entered',
+    'wrongformat' => 'Wrong Base64 format for secret PIN'
+  }
+
+  if error_messages.include? params[:msg]
+    @error_msg = error_messages[params[:msg]]
+  else
+    @error_msg = 'Something went wrong :('
+  end
+
+  erb :error
 end
