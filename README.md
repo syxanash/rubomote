@@ -37,7 +37,7 @@ Download this repo or clone it. In order to correctly use the app, you need to a
 $ ruby app.rb -o 0.0.0.0
 ```
 
-now open the web browser on your device and type the ip address of the server followed by port `4567`; you can check your ip address with `ifconfig` command and look for `inet` address on interface `en1`. After that you should see the web app asking for the secret pin generated randomly on the terminal like so:
+now open the web browser on your device and type the ip address of the server **followed by port** `4567`; you can check your ip address with `ifconfig` command and look for `inet` address on interface `en1`. After that you should see the web app asking for the secret pin generated randomly on the terminal like so:
 
 ![secret cow](http://i.imgur.com/BS7vY9p.png)
 
