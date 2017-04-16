@@ -47,7 +47,7 @@ Copy it into the login page and once you've clicked on **Verify** you should be 
 
 [Here](https://asciinema.org/a/113400)'s an example of how to set up rubomote server.
 
-### Tested OS
+## Tested OS
 
 * OS X Mavericks
 * OS X Yosemite
