@@ -45,7 +45,7 @@ Copy it into the login page and once you've clicked on **Verify** you should be 
 
 ![web app](http://i.imgur.com/TJ81IXL.jpg)
 
-[Here](https://asciinema.org/a/120627)'s an example of how to set up rubomote server.
+[Here](https://asciinema.org/a/120635)'s an example of how to set up rubomote server.
 
 ## Tested OS
 
