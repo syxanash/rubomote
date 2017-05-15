@@ -2,6 +2,7 @@ require 'sinatra'
 require 'sinatra-websocket'
 require 'itunes-client'
 require 'base64'
+require 'socket'
 
 include Itunes
 
@@ -9,8 +10,14 @@ PIN_LENGTH = 5
 
 def generate_pin
   secret_pin = ''
+  socket_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}
+
+  if socket_ip.nil?
+    abort('Server won\'t be reached by any device, connect server to WiFi or Ethernet!')
+  end
+
   PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
-  system("cowsay 'Your secret PIN: #{secret_pin}' | lolcat")
+  system("cowsay 'Server hosted at: http://#{socket_ip.ip_address}:4567\n Secret PIN: #{secret_pin}' | lolcat")
 
   secret_pin
 end
@@ -42,6 +49,7 @@ end
 configure do
   enable :sessions
 
+  set :bind, '0.0.0.0'
   set :sockets, []
   set :session_secret, generate_pin
   set :show_exceptions, false

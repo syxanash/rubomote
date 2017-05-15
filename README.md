@@ -31,10 +31,10 @@ and you are ready to go.
 
 ### Run the app
 
-Download this repo or clone it. In order to correctly use the app, you need to allow access from external clients on the same network, to do this set sinatra [bind option](http://www.sinatrarb.com/configuration.html#__server_hostname_or_ip_address) to `0.0.0.0` or simply run the app with the following command:
+Download this repo or clone it. Run the app with the following command:
 
 ```
-$ ruby app.rb -o 0.0.0.0
+$ ruby app.rb
 ```
 
 now open the web browser on your device and type the ip address of the server **followed by port** `4567`; you can check your ip address with `ifconfig` command and look for `inet` address on interface `en1`. After that you should see the web app asking for the secret pin generated randomly on the terminal like so:
@@ -45,7 +45,7 @@ Copy it into the login page and once you've clicked on **Verify** you should be 
 
 ![web app](http://i.imgur.com/TJ81IXL.jpg)
 
-[Here](https://asciinema.org/a/113400)'s an example of how to set up rubomote server.
+[Here](https://asciinema.org/a/120627)'s an example of how to set up rubomote server.
 
 ## Tested OS
 
