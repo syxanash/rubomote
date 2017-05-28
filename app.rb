@@ -11,13 +11,19 @@ PIN_LENGTH = 5
 def generate_pin
   secret_pin = ''
   socket_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}
+  host_port = ''
 
   if socket_ip.nil?
     abort('Server won\'t be reached by any device, connect server to WiFi or Ethernet!')
   end
 
   PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
-  system("cowsay 'Server hosted at: http://#{socket_ip.ip_address}:4567\n Secret PIN: #{secret_pin}' | lolcat")
+
+  unless @server_port == 80
+    host_port = ":#{@server_port}"
+  end
+
+  system("cowsay 'Server hosted at: http://#{socket_ip.ip_address}#{host_port}\n Secret PIN: #{secret_pin}' | lolcat")
 
   secret_pin
 end
@@ -49,6 +55,10 @@ end
 configure do
   enable :sessions
 
+  # if user executing the script is root then use port 80 otherwise 4567
+  @server_port = Process.uid == 0 ? 80 : 4567
+
+  set :port, @server_port
   set :bind, '0.0.0.0'
   set :sockets, []
   set :session_secret, generate_pin
@@ -62,8 +72,10 @@ before do
 end
 
 # for any routes except /login and /errors/* authentication is required
-before %r{^(?!\/login|\/errors/.)} do
-  authenticate! unless request.websocket?
+before do
+  if %r{^(?!\/login|\/errors\/.)} =~ request.path_info
+    authenticate! unless request.websocket?
+  end
 end
 
 # routes for login
@@ -78,6 +90,9 @@ end
 
 post '/login' do
   entered_pin = ''
+
+  # get POST parameters which contain PIN numbers
+  params = request.POST
 
   params.each do |key, value|
     entered_pin += value
