@@ -3,13 +3,15 @@ require 'sinatra-websocket'
 require 'itunes-client'
 require 'base64'
 require 'socket'
+require 'json'
 
+require './lib/rubomote_helpers'
 require './lib/lyrics_finder'
 
 include Itunes
 
-PIN_LENGTH = 6
-GENIUS_TOKEN = ''.freeze
+PIN_LENGTH = 1
+GENIUS_TOKEN = 'Na70o4NBjPTMcyaKnky4qEFhtEYJ7VtiM4trkQtQu5Db9Zd-K3o4ex8m3LqN-jsw'.freeze
 
 def generate_pin
   secret_pin = ''
@@ -29,37 +31,7 @@ def generate_pin
   secret_pin
 end
 
-helpers do
-  def authenticate!
-    redirect '/login' unless authenticated?
-  end
-
-  def authenticated?
-    session[:pin] == settings.session_secret
-  end
-
-  def get_lyrics
-    lyrics_text = 'lyrics_'
-
-    if @player.stopped?
-      lyrics_text += 'Press ▶️ to get the lyrics'
-    else
-      begin
-        lyrics_text += @lyrics_finder.lyrics(@player.current_track.name, @player.current_track.artist)
-      rescue LyricsNotFound
-        lyrics_text += 'Nothing found'
-      rescue Genius::AuthenticationError
-        lyrics_text += 'Invalid Genius API token'
-      end
-    end
-
-    lyrics_text
-  end
-
-  def track_info
-    "#{@player.current_track.name} - #{@player.current_track.artist}"
-  end
-end
+helpers RubomoteHelpers
 
 not_found do
   @error_msg = '404 not found!'
@@ -153,7 +125,8 @@ get '/auth/:secretpin' do
       conn = { socket: ws }
 
       ws.onopen do
-        #warn 'someone just connected'
+        # transfer object which will be sent to the client via websocket
+        message = {}
 
         # when clients connect to the websocket server send
         # artist, track name and volume value
@@ -162,72 +135,72 @@ get '/auth/:secretpin' do
 
         EM.next_tick {
           if @player.playing?
-            conn[:socket].send(track_info.to_s)
+            message[:current_track] = track_info
           end
 
-          conn[:socket].send(@volume_control.value.to_s)
+          message[:volume_value] = @volume_control.value
+
+          conn[:socket].send(message.to_json.to_s)
         }
       end
 
-      ws.onmessage do |msg|
+      ws.onmessage do |client_msg|
         EM.next_tick {
-          #warn "message received by client is: #{msg}"
+          message = {}
 
-          response = msg
+          response = client_msg
 
           # if the message sent by the client contains the word volume, parse it
           # and dynamically execute the methods "up" or "down" of the class which
           # controls the volume
-          if msg.include? 'volume'
-            msg.slice! 'volume_'
+          if client_msg.include? 'volume'
+            client_msg.slice! 'volume_'
 
-            @volume_control.send(msg)
+            @volume_control.send(client_msg)
 
-            response = @volume_control.value
-          elsif msg.include? 'player'
-            msg.slice! 'player_'
-            # otherwise dynamically execute method of the class which controls
+            message[:volume_value] = @volume_control.value
+          elsif client_msg.include? 'player'
+            client_msg.slice! 'player_'
+            # dynamically execute method of the class which controls
             # the player and if the player is currently playing a track
             # send it to the client
 
-            @player.send(msg)
-
-            # if the player is not playing a track the response will be
-            # the string "pause"
+            @player.send(client_msg)
 
             if @player.playing?
-              response = track_info
+              message[:current_track] = track_info
+            else
+              message[:playing] = false
             end
-          elsif msg.include? 'lyrics'
-            response = get_lyrics
+          elsif client_msg.include? 'lyrics'
+            message[:lyrics] = track_lyrics
           end
 
           # if client needs status of the player send track name and volume vlaue
           # only to that specific client, otherwise send response to all clients
-          if response == 'status'
-
+          if client_msg == 'status'
             if @player.playing?
-              conn[:socket].send(track_info.to_s)
-            else
-              # if player is not playing a song then set to pause the client player
-              conn[:socket].send('pause'.to_s)
+              message[:current_track] = track_info
             end
 
-            conn[:socket].send(@volume_control.value.to_s)
-          elsif msg.include? 'lyrics'
+            message[:volume_value] = @volume_control.value
+            message[:playing] = @player.playing?
+
+            conn[:socket].send(message.to_json.to_s)
+          elsif client_msg.include? 'lyrics'
+            message[:lyrics] = track_lyrics
+
             # send lyrics only to the client who made request
-            conn[:socket].send(response.to_s)
+            conn[:socket].send(message.to_json.to_s)
           else
             settings.sockets.each do |user|
-              user[:socket].send(response.to_s)
+              user[:socket].send(message.to_json.to_s)
             end
           end
         }
       end
 
       ws.onclose do
-        #warn 'websocket closed by a client!'
-
         settings.sockets.delete(ws)
       end
     end

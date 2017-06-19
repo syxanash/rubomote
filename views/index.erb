@@ -89,7 +89,8 @@
 
     // when browser window is on focus request track name and volume
     window.onfocus = function () {
-      ws.send('status');
+      if (ws.readyState === ws.OPEN)
+        ws.send('status');
     };
 
     window.onload = function() {
@@ -104,48 +105,51 @@
       //shake event callback
       function shakeEventDidOccur () {
         // when smartphone is shaking go to next track
-        ws.send('player_next_track');
+        if (ws.readyState === ws.OPEN)
+          ws.send('player_next_track');
       }
     };
 
     // web socket stuff
 
     var ws = new WebSocket('ws://' + window.location.host + '/auth/<%= Base64.urlsafe_encode64(settings.session_secret) %>');
-    ws.onopen  = function() { console.log('successfully connected to WebSocket server!'); };
-    ws.onclose = function() { console.log('WebSocket server went down!'); location.reload(); };
+    ws.onopen  = function() { console.log('[!] successfully connected to WebSocket server!'); };
+    ws.onclose = function() { console.log('[!] WebSocket server went down!'); location.reload(); };
     ws.onmessage = function(m) {
-      console.log('data received: ' + m.data);
+      console.log('[?] data received: ' + m.data);
 
-      if (m.data == 'pause') {
-        switch_to_play(false);
-      } else if (isFinite(String(m.data))) { // check if incoming data is a number
-        $('#volume_value').attr('aria-valuenow', m.data);
-        $('#volume_value').attr('style', 'width: ' + m.data + '%;');
-        $('#volume_value').html('Volume ' + m.data + '%');
-      } else if (m.data.startsWith("lyrics_")) {
-        // if incoming data from server starts with string "lyrics_" put
-        // lyrics in div lyrics_text
+      var server_message = JSON.parse(m.data);
 
-        lyrics_content = m.data.replace(/lyrics_/g,'');
+      if (server_message.hasOwnProperty('volume_value')) {
+        $('#volume_value').attr('aria-valuenow', server_message['volume_value']);
+        $('#volume_value').attr('style', 'width: ' + server_message['volume_value'] + '%;');
+        $('#volume_value').html('Volume ' + server_message['volume_value'] + '%');
+      }
 
-        $('#lyrics').attr('style', 'display: block;');
-        $('#lyrics_text').html('<pre>' + lyrics_content + '</pre><h4>downloaded from <a href="https://genius.com" target="_blank">genius.com</a></h4>');
-      } else {
+      if (server_message.hasOwnProperty('current_track')) {
         // if song changed then remove the lyrics and set the new title
         // on top of the page
 
-        if (song_title != m.data) {
+        if (song_title != server_message['current_track']) {
           $('#lyrics_text').html('<pre>loading...</pre>');
           $('#lyrics_text').attr('style', 'display: none;');
 
           show_lyrics = false;
-          song_title = m.data;
+          song_title = server_message['current_track'];
 
-          // incoming data is a string so it is interpreted as track name
-          $('#track_info').html(go_90s(m.data));
+          $('#track_info').html(go_90s(server_message['current_track']));
         }
 
         switch_to_play(true);
+      }
+
+      if (server_message.hasOwnProperty('playing')) {
+        switch_to_play(server_message['playing']);
+      }
+
+      if (server_message.hasOwnProperty('lyrics')) {
+        $('#lyrics').attr('style', 'display: block;');
+        $('#lyrics_text').html('<pre>' + server_message['lyrics'] + '</pre><h4>downloaded from <a href="https://genius.com" target="_blank">genius.com</a></h4>');
       }
     }
 
@@ -156,7 +160,9 @@
 
       if (show_lyrics) {
         $('#lyrics_text').attr('style', 'display: block;');
-        ws.send('lyrics');
+
+        if (ws.readyState === ws.OPEN)
+          ws.send('lyrics');
       } else {
         $('#lyrics_text').attr('style', 'display: none;');
       }
@@ -166,7 +172,8 @@
       // when clicked volume up button and volume is already to max then do not
       // send request to the server, same thing for volume down button
 
-      if (!(this.id == 'volume_up' && $('#volume_value').text() == 'Volume 100%') &&
+      if (ws.readyState === ws.OPEN &&
+          !(this.id == 'volume_up' && $('#volume_value').text() == 'Volume 100%') &&
           !(this.id == 'volume_down' && $('#volume_value').text() == 'Volume 0%')) {
         ws.send(this.id);
       }

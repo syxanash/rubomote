@@ -60,4 +60,6 @@ Unfortunately this app currently works only on Macs due to **itunes-client** lib
 
 - [x] fix problem for updating the lyrics for each client
 - [x] check if user doesn't enter a API TOKEN for genius.com
-- [ ] put everything inside a config file
+- [ ] add transfer object also for client to server requests
+- [ ] PIN and Genius TOKEN inside a json config file
+- [ ] update README for lyrics feature
