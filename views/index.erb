@@ -1,5 +1,5 @@
     <div>
-      <h4><em><span id="track_info"></span></em></h4>
+      <h3><em><span id="track_info"></span></em></h3>
 
       <table class="table text-center">
         <tr>
@@ -52,6 +52,15 @@
           Volume 100%
         </div>
       </div>
+
+      <div class="text-center" id="lyrics">
+        <a class="btn btn-inverse btn-default btn-lg" id="show_lyrics">
+          <span title="lyrics" class="glyphicon glyphicon-align-left" aria-hidden="true"></span> lyrics
+        </a>
+        <br><br>
+        <div id="lyrics_text" style="display: none;">
+        </div>
+      </div>
     </div>
 
 <script>
@@ -75,6 +84,8 @@
   }
 
   $(document).ready(function(){
+    show_lyrics = false;
+    song_title = '';
 
     // when browser window is on focus request track name and volume
     window.onfocus = function () {
@@ -111,14 +122,45 @@
         $('#volume_value').attr('aria-valuenow', m.data);
         $('#volume_value').attr('style', 'width: ' + m.data + '%;');
         $('#volume_value').html('Volume ' + m.data + '%');
+      } else if (m.data.startsWith("lyrics_")) {
+        // if incoming data from server starts with string "lyrics_" put
+        // lyrics in div lyrics_text
+
+        lyrics_content = m.data.replace(/lyrics_/g,'');
+
+        $('#lyrics').attr('style', 'display: block;');
+        $('#lyrics_text').html('<pre>' + lyrics_content + '</pre><h4>downloaded from <a href="https://genius.com" target="_blank">genius.com</a></h4>');
       } else {
-        // incoming data is a string thus it is interpreted as track name
-        $('#track_info').html(go_90s(m.data));
+        // if song changed then remove the lyrics and set the new title
+        // on top of the page
+
+        if (song_title != m.data) {
+          $('#lyrics_text').html('<pre>loading...</pre>');
+          $('#lyrics_text').attr('style', 'display: none;');
+
+          show_lyrics = false;
+          song_title = m.data;
+
+          // incoming data is a string so it is interpreted as track name
+          $('#track_info').html(go_90s(m.data));
+        }
+
         switch_to_play(true);
       }
     }
 
     // button events
+
+    $('#show_lyrics').click(function(){
+      show_lyrics = !show_lyrics;
+
+      if (show_lyrics) {
+        $('#lyrics_text').attr('style', 'display: block;');
+        ws.send('lyrics');
+      } else {
+        $('#lyrics_text').attr('style', 'display: none;');
+      }
+    });
 
     $(".player").click(function(){
       // when clicked volume up button and volume is already to max then do not

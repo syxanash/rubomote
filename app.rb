@@ -4,13 +4,16 @@ require 'itunes-client'
 require 'base64'
 require 'socket'
 
+require './lib/lyrics_finder'
+
 include Itunes
 
 PIN_LENGTH = 5
+GENIUS_TOKEN = ''.freeze
 
 def generate_pin
   secret_pin = ''
-  socket_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}
+  socket_ip = Socket.ip_address_list.detect{ |intf| intf.ipv4_private? }
   host_port = ''
 
   if socket_ip.nil?
@@ -19,9 +22,7 @@ def generate_pin
 
   PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
 
-  unless @server_port == 80
-    host_port = ":#{@server_port}"
-  end
+  host_port = ":#{@server_port}" unless @server_port == 80
 
   system("cowsay 'Server hosted at: http://#{socket_ip.ip_address}#{host_port}\n Secret PIN: #{secret_pin}' | lolcat")
 
@@ -35,6 +36,24 @@ helpers do
 
   def authenticated?
     session[:pin] == settings.session_secret
+  end
+
+  def get_lyrics
+    lyrics_text = 'lyrics_'
+
+    if @player.stopped?
+      lyrics_text += 'Press ▶️ to get the lyrics'
+    else
+      begin
+        lyrics_text += @lyrics_finder.lyrics(@player.current_track.name, @player.current_track.artist)
+      rescue LyricsNotFound
+        lyrics_text += 'Nothing found'
+      rescue Genius::AuthenticationError
+        lyrics_text += 'Invalid Genius API token'
+      end
+    end
+
+    lyrics_text
   end
 
   def track_info
@@ -65,10 +84,12 @@ configure do
   set :show_exceptions, false
 end
 
-# before executing any routes create two instances of itunes-client
+# before executing any routes create two instances of itunes-client and lyrics finder
 before do
   @volume_control = Itunes::Volume
   @player = Itunes::Player
+
+  @lyrics_finder = LyricsFinder.new(GENIUS_TOKEN)
 end
 
 # for any routes except /login and /errors/* authentication is required
@@ -138,6 +159,7 @@ get '/auth/:secretpin' do
         # artist, track name and volume value
 
         settings.sockets << conn
+
         EM.next_tick {
           if @player.playing?
             conn[:socket].send(track_info.to_s)
@@ -148,39 +170,42 @@ get '/auth/:secretpin' do
       end
 
       ws.onmessage do |msg|
-        #warn "message received by client is: #{msg}"
+        EM.next_tick {
+          #warn "message received by client is: #{msg}"
 
-        response = msg
+          response = msg
 
-        # if the message sent by the client contains the word volume, parse it
-        # and dynamically execute the methods "up" or "down" of the class which
-        # controls the volume
-        if msg.include? 'volume'
-          msg.slice! 'volume_'
+          # if the message sent by the client contains the word volume, parse it
+          # and dynamically execute the methods "up" or "down" of the class which
+          # controls the volume
+          if msg.include? 'volume'
+            msg.slice! 'volume_'
 
-          @volume_control.send(msg)
+            @volume_control.send(msg)
 
-          response = @volume_control.value
-        elsif msg.include? 'player'
-          msg.slice! 'player_'
-          # otherwise dynamically execute method of the class which controls
-          # the player and if the player is currently playing a track
-          # send it to the client
+            response = @volume_control.value
+          elsif msg.include? 'player'
+            msg.slice! 'player_'
+            # otherwise dynamically execute method of the class which controls
+            # the player and if the player is currently playing a track
+            # send it to the client
 
-          @player.send(msg)
+            @player.send(msg)
 
-          # if the player is not playing a track the response will be
-          # the string "pause"
+            # if the player is not playing a track the response will be
+            # the string "pause"
 
-          if @player.playing?
-            response = track_info
+            if @player.playing?
+              response = track_info
+            end
+          elsif msg.include? 'lyrics'
+            response = get_lyrics
           end
-        end
 
-        # if client needs status of the player send track name and volume vlaue
-        # only to that specific client, otherwise send response to all clients
-        if response == 'status'
-          EM.next_tick {
+          # if client needs status of the player send track name and volume vlaue
+          # only to that specific client, otherwise send response to all clients
+          if response == 'status'
+
             if @player.playing?
               conn[:socket].send(track_info.to_s)
             else
@@ -189,14 +214,15 @@ get '/auth/:secretpin' do
             end
 
             conn[:socket].send(@volume_control.value.to_s)
-          }
-        else
-          EM.next_tick {
+          elsif msg.include? 'lyrics'
+            # send lyrics only to the client who made request
+            conn[:socket].send(response.to_s)
+          else
             settings.sockets.each do |user|
               user[:socket].send(response.to_s)
             end
-          }
-        end
+          end
+        }
       end
 
       ws.onclose do
