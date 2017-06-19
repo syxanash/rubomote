@@ -10,8 +10,8 @@ require './lib/lyrics_finder'
 
 include Itunes
 
-PIN_LENGTH = 1
-GENIUS_TOKEN = 'Na70o4NBjPTMcyaKnky4qEFhtEYJ7VtiM4trkQtQu5Db9Zd-K3o4ex8m3LqN-jsw'.freeze
+PIN_LENGTH = 6
+GENIUS_TOKEN = ''.freeze
 
 def generate_pin
   secret_pin = ''
