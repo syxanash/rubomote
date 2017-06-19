@@ -6,6 +6,11 @@ require 'similar_text'
 class LyricsNotFound < StandardError; end
 
 class LyricsFinder
+  # change this constant if you want to increase or decrease the percentage
+  # of similarity between the artist entered by the user and the artist
+  # found on genius.com
+  PERCENTAGE_OF_SIMILARITY = 80
+
   def initialize(api_key)
     Genius.access_token = api_key
   end
@@ -29,7 +34,7 @@ class LyricsFinder
     # to the artist entered by the user then lyrics is not found
 
     if song_found.nil? ||
-       song_found.resource['primary_artist']['name'].similar(track_artist) < 80
+       (song_found.resource['primary_artist']['name'].similar(track_artist) < PERCENTAGE_OF_SIMILARITY)
       raise LyricsNotFound, "Lyrics not found for #{track_name}"
     end
 
