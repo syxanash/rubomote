@@ -1,11 +1,11 @@
     <div>
-      <h3><em><span id="track_info"></span></em></h3>
+      <div id="track_info"><h3><em><marquee>Press ▶️ to begin!</marquee></em></h3></div>
 
       <table class="table text-center">
         <tr>
           <td></td>
           <td>
-            <a class="btn btn-inverse btn-default btn-lg player" id="volume_up">
+            <a class="btn btn-inverse btn-default btn-lg player volume" id="up">
               <span title="volume up" class="glyphicon glyphicon-volume-up" aria-hidden="true"></span>
             </a>
           </td>
@@ -14,23 +14,23 @@
 
         <tr>
           <td>
-            <a class="btn btn-lg btn-primary player" id="player_prev_track" role="button">
+            <a class="btn btn-lg btn-primary player controls" id="prev_track" role="button">
               <span title="previous track" class="glyphicon glyphicon-backward" aria-hidden="true"></span>
             </a>
           </td>
           <td>
 
-            <a class="btn btn-lg btn-danger player" id="player_pause" role="button" style="display: none;">
+            <a class="btn btn-lg btn-danger player controls" id="pause" role="button" style="display: none;">
               <span title="pause" class="glyphicon glyphicon-pause" aria-hidden="true"></span>
             </a>
 
-            <a class="btn btn-lg btn-danger player" id="player_play" role="button">
+            <a class="btn btn-lg btn-danger player controls" id="play" role="button">
               <span title="play" class="glyphicon glyphicon-play" aria-hidden="true"></span>
             </a>
 
           </td>
           <td>
-            <a class="btn btn-lg btn-primary player" id="player_next_track" role="button">
+            <a class="btn btn-lg btn-primary player controls" id="next_track" role="button">
               <span title="next track" class="glyphicon glyphicon-forward" aria-hidden="true"></span>
             </a>
           </td>
@@ -39,7 +39,7 @@
         <tr>
           <td></td>
           <td>
-            <a class="btn btn-inverse btn-default btn-lg player" id="volume_down">
+            <a class="btn btn-inverse btn-default btn-lg player volume" id="down">
               <span title="volume down" class="glyphicon glyphicon-volume-down" aria-hidden="true"></span>
             </a>
           </td>
@@ -65,19 +65,19 @@
 
 <script>
   function go_90s(title) {
-    return '<marquee scrollamount="10">' + title + '</marquee>';
+    return '<h3><em><marquee scrollamount="10">' + title + '</marquee></em></h3>';
   }
 
   function switch_to_play(playing) {
     if (playing) {
-      $('#player_pause').show();
-      $('#player_play').hide();
+      $('#pause').show();
+      $('#play').hide();
 
       // change title
       document.title = 'rubomote 🔈🎶'
     } else {
-      $('#player_pause').hide();
-      $('#player_play').show();
+      $('#pause').hide();
+      $('#play').show();
 
       document.title = 'rubomote 🔈'
     }
@@ -90,7 +90,7 @@
     // when browser window is on focus request track name and volume
     window.onfocus = function () {
       if (ws.readyState === ws.OPEN)
-        ws.send('status');
+        ws.send(JSON.stringify({ status: true }));
     };
 
     window.onload = function() {
@@ -106,7 +106,7 @@
       function shakeEventDidOccur () {
         // when smartphone is shaking go to next track
         if (ws.readyState === ws.OPEN)
-          ws.send('player_next_track');
+          ws.send(JSON.stringify({ controls: 'next_track' }));
       }
     };
 
@@ -118,7 +118,23 @@
     ws.onmessage = function(m) {
       console.log('[?] data received: ' + m.data);
 
-      var server_message = JSON.parse(m.data);
+      var server_message = '';
+
+      // check if data sent from server is valid JSON
+      if (/^[\],:{}\s]*$/.test(m.data.replace(/\\["\\\/bfnrtu]/g, '@').
+          replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
+          replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+        server_message = JSON.parse(m.data);
+      } else {
+        alert('Something went wrong with the server!');
+        throw new Error("Invalid JSON sent by server!");
+      }
+
+      // start to check json content sent by the client
+
+      if (server_message.hasOwnProperty('error')) {
+        alert(server_message['error']);
+      }
 
       if (server_message.hasOwnProperty('volume_value')) {
         $('#volume_value').attr('aria-valuenow', server_message['volume_value']);
@@ -162,7 +178,7 @@
         $('#lyrics_text').attr('style', 'display: block;');
 
         if (ws.readyState === ws.OPEN)
-          ws.send('lyrics');
+          ws.send(JSON.stringify({ lyrics: true }));
       } else {
         $('#lyrics_text').attr('style', 'display: none;');
       }
@@ -173,9 +189,18 @@
       // send request to the server, same thing for volume down button
 
       if (ws.readyState === ws.OPEN &&
-          !(this.id == 'volume_up' && $('#volume_value').text() == 'Volume 100%') &&
-          !(this.id == 'volume_down' && $('#volume_value').text() == 'Volume 0%')) {
-        ws.send(this.id);
+          !(this.id == 'up' && $('#volume_value').text() == 'Volume 100%') &&
+          !(this.id == 'down' && $('#volume_value').text() == 'Volume 0%')) {
+
+        var request = {};
+
+        if (document.getElementById(this.id).classList.contains('controls')) {
+          request['controls'] = this.id;
+        } else if (document.getElementById(this.id).classList.contains('volume')) {
+          request['volume'] = this.id;
+        }
+
+        ws.send(JSON.stringify(request));
       }
     });
   });

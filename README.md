@@ -55,11 +55,3 @@ Copy it into the login page and once you've clicked on **Verify** you should be 
 * macOS Sierra
 
 Unfortunately this app currently works only on Macs due to **itunes-client** library which uses AppleScript scripts to control iTunes.
-
-## TODO
-
-- [x] fix problem for updating the lyrics for each client
-- [x] check if user doesn't enter a API TOKEN for genius.com
-- [ ] add transfer object also for client to server requests
-- [ ] PIN and Genius TOKEN inside a json config file
-- [ ] update README for lyrics feature

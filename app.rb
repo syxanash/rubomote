@@ -11,7 +11,7 @@ require './lib/lyrics_finder'
 include Itunes
 
 PIN_LENGTH = 6
-GENIUS_TOKEN = ''.freeze
+GENIUS_TOKEN = 'YOUR GENIUS.COM API KEY GOES HERE!!!'.freeze
 
 def generate_pin
   secret_pin = ''
@@ -145,57 +145,68 @@ get '/auth/:secretpin' do
       end
 
       ws.onmessage do |client_msg|
-        EM.next_tick {
-          message = {}
+        EM.defer {
+          send_to_all = false
+          server_reply = {}
+          client_request = ''
 
-          response = client_msg
+          # check if client request is valid JSON
+          begin
+            client_request = JSON.parse(client_msg)
+          rescue JSON::ParserError
+            conn[:socket].send({ 'error' => 'Invalid JSON sent from client' }.to_json.to_s)
+            next
+          end
 
-          # if the message sent by the client contains the word volume, parse it
-          # and dynamically execute the methods "up" or "down" of the class which
-          # controls the volume
-          if client_msg.include? 'volume'
-            client_msg.slice! 'volume_'
+          # checking client requests
 
-            @volume_control.send(client_msg)
+          if client_request['status']
+            if @player.playing?
+              server_reply[:current_track] = track_info
+            end
 
-            message[:volume_value] = @volume_control.value
-          elsif client_msg.include? 'player'
-            client_msg.slice! 'player_'
+            server_reply[:volume_value] = @volume_control.value
+            server_reply[:playing] = @player.playing?
+          end
+
+          unless client_request['volume'].nil?
+            # if the server_reply sent by the client contains the word volume, parse it
+            # and dynamically execute the methods "up" or "down" of the class which
+            # controls the volume
+            @volume_control.send(client_request['volume'])
+
+            server_reply[:volume_value] = @volume_control.value
+
+            send_to_all = true
+          end
+
+          unless client_request['controls'].nil?
             # dynamically execute method of the class which controls
             # the player and if the player is currently playing a track
             # send it to the client
-
-            @player.send(client_msg)
+            @player.send(client_request['controls'])
 
             if @player.playing?
-              message[:current_track] = track_info
+              server_reply[:current_track] = track_info
             else
-              message[:playing] = false
+              server_reply[:playing] = false
             end
-          elsif client_msg.include? 'lyrics'
-            message[:lyrics] = track_lyrics
+
+            send_to_all = true
           end
 
-          # if client needs status of the player send track name and volume vlaue
-          # only to that specific client, otherwise send response to all clients
-          if client_msg == 'status'
-            if @player.playing?
-              message[:current_track] = track_info
-            end
+          if client_request['lyrics']
+            server_reply[:lyrics] = track_lyrics
+          end
 
-            message[:volume_value] = @volume_control.value
-            message[:playing] = @player.playing?
-
-            conn[:socket].send(message.to_json.to_s)
-          elsif client_msg.include? 'lyrics'
-            message[:lyrics] = track_lyrics
-
-            # send lyrics only to the client who made request
-            conn[:socket].send(message.to_json.to_s)
-          else
+          if send_to_all
+            # send the server reply to all clients connected to
+            # websocket server
             settings.sockets.each do |user|
-              user[:socket].send(message.to_json.to_s)
+              user[:socket].send(server_reply.to_json.to_s)
             end
+          else
+            conn[:socket].send(server_reply.to_json.to_s)
           end
         }
       end
