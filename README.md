@@ -50,6 +50,8 @@ Copy it into the login page and once you've clicked on **Verify** you should be 
 
 If you want to get lyrics when you're listening to a song, simply add your **client access token** from [genius.com](https://genius.com/api-clients) to `rubomote_config.json`. Once the token is stored inside rubomote configuration file you'll be able to get the lyrics of the current song played by clicking the green button under the volume bar, see the picture displayed before.
 
+I've also written a command line tool to download lyrics from genius.com, check [this](https://gist.github.com/syxanash/f9a21f21d2bbad43d7eae0f969efe0b6) out!
+
 ## Tested OS
 
 * OS X Mavericks
