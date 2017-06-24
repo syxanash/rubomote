@@ -13,11 +13,10 @@ alternatively you can also :boom: **shake** :boom: your smartphone to change son
 ## Getting Started
 ### Dependencies
 
-install [sinatra](http://www.sinatrarb.com/) and [itunes-client](https://github.com/katsuma/itunes-client) gems:
+Check `Gemfile` to see all dependencies required or just run:
 
 ```
-$ gem install sinatra
-$ gem install itunes-client
+bundle install
 ```
 
 this app also requires **cowsay** and **lolcat**:
@@ -39,13 +38,17 @@ $ ruby app.rb
 
 now open the web browser on your device and type the ip address of the server **followed by port** `4567`; you can check your ip address with `ifconfig` command and look for `inet` address on interface `en1`. After that you should see the web app asking for the secret pin generated randomly on the terminal like so:
 
-![secret cow](http://i.imgur.com/BS7vY9p.png)
+![secret cow](https://i.imgur.com/s3ANkxs.png)
 
 Copy it into the login page and once you've clicked on **Verify** you should be able to control iTunes with your smartphone.
 
-![web app](http://i.imgur.com/TJ81IXL.jpg)
+![web app](https://i.imgur.com/jIcT0aY.png)
 
 [Here](https://asciinema.org/a/120635)'s an example of how to set up rubomote server.
+
+## Lyrics
+
+If you want to get lyrics when you're listening to a song, simply add your **client access token** from [genius.com](https://genius.com/api-clients) to `rubomote_config.json`. Once the token is stored inside rubomote configuration file you'll be able to get the lyrics of the current song played by clicking the green button under the volume bar, see the picture displayed before.
 
 ## Tested OS
 
