@@ -1,0 +1,5 @@
+{
+  "pin_length": 5,
+  "genius_token": "YOUR GENIUS API TOKEN GOES HERE!!!",
+  "server_port": 4567
+}

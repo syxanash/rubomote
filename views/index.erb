@@ -87,6 +87,11 @@
     show_lyrics = false;
     song_title = '';
 
+    // check every two minutes if player status has changed
+    setInterval(function() {
+      ws.send(JSON.stringify({ status: true }))
+    }, 120 * 1000);
+
     // when browser window is on focus request track name and volume
     window.onfocus = function () {
       if (ws.readyState === ws.OPEN)

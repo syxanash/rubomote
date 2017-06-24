@@ -1,8 +1,8 @@
-    <h4>Enter the <%= PIN_LENGTH %> digit PIN shown in the terminal:</h4>
+    <h4>Enter the <%= settings.pin_length %> digit PIN shown in the terminal:</h4>
 
     <div>
       <form action="/login" method="post" class="form-inline">
-      <% PIN_LENGTH.times do |field| %>
+      <% settings.pin_length.times do |field| %>
         <select class="form-control" name="pin<%= field %>">
         <% 10.times do |digit| %>
           <option><%= digit %></option>

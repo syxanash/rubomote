@@ -10,10 +10,9 @@ require './lib/lyrics_finder'
 
 include Itunes
 
-PIN_LENGTH = 6
-GENIUS_TOKEN = 'YOUR GENIUS.COM API KEY GOES HERE!!!'.freeze
+CONFIG_FILE = 'rubomote_config.json'.freeze
 
-def generate_pin
+def generate_pin(length, user_port)
   secret_pin = ''
   socket_ip = Socket.ip_address_list.detect{ |intf| intf.ipv4_private? }
   host_port = ''
@@ -22,9 +21,9 @@ def generate_pin
     abort('Server won\'t be reached by any device, connect server to WiFi or Ethernet!')
   end
 
-  PIN_LENGTH.times { secret_pin += Random.rand(10).to_s }
+  length.times { secret_pin += Random.rand(10).to_s }
 
-  host_port = ":#{@server_port}" unless @server_port == 80
+  host_port = ":#{user_port}" unless user_port == 80
 
   system("cowsay 'Server hosted at: http://#{socket_ip.ip_address}#{host_port}\n Secret PIN: #{secret_pin}' | lolcat")
 
@@ -46,13 +45,24 @@ end
 configure do
   enable :sessions
 
-  # if user executing the script is root then use port 80 otherwise 4567
-  @server_port = Process.uid == 0 ? 80 : 4567
+  # get content of rubomote configuration file
+  begin
+    rconfig = File.read(CONFIG_FILE)
+    rconfig = JSON.parse(rconfig)
+  rescue Errno::ENOENT
+    abort('Can\'t read Rubomote config file!')
+  end
 
-  set :port, @server_port
+  # if user executing the script is root then use port 80 otherwise the one
+  # set in configuration file
+  server_port = Process.uid == 0 ? 80 : rconfig['server_port']
+
+  set :pin_length, rconfig['pin_length']
+  set :genius_token, rconfig['genius_token']
+  set :port, server_port
   set :bind, '0.0.0.0'
   set :sockets, []
-  set :session_secret, generate_pin
+  set :session_secret, generate_pin(rconfig['pin_length'], server_port)
   set :show_exceptions, false
 end
 
@@ -61,11 +71,9 @@ before do
   @volume_control = Itunes::Volume
   @player = Itunes::Player
 
-  @lyrics_finder = LyricsFinder.new(GENIUS_TOKEN)
-end
+  @lyrics_finder = LyricsFinder.new(settings.genius_token)
 
-# for any routes except /login and /errors/* authentication is required
-before do
+  # for any routes except /login and /errors/* authentication is required
   if %r{^(?!\/login|\/errors\/.)} =~ request.path_info
     authenticate! unless request.websocket?
   end

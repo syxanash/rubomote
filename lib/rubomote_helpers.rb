@@ -18,6 +18,7 @@ module RubomoteHelpers
       rescue Genius::AuthenticationError
         lyrics_text = 'Invalid Genius API token'
       rescue Exception
+        lyrics_text = 'An error occurred while downloading the lyrics'
       end
     end
 
