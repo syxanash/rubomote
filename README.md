@@ -38,11 +38,11 @@ $ ruby app.rb
 
 now open the web browser on your device and type the ip address of the server **followed by port** `4567`; you can check your ip address with `ifconfig` command and look for `inet` address on interface `en1`. After that you should see the web app asking for the secret pin generated randomly on the terminal like so:
 
-![secret cow](https://i.imgur.com/s3ANkxs.png)
+![secret cow](https://i.imgur.com/zxAXOhP.png)
 
 Copy it into the login page and once you've clicked on **Verify** you should be able to control iTunes with your smartphone.
 
-![web app](https://i.imgur.com/jIcT0aY.png)
+![web app](https://i.imgur.com/GGJHAGG.png)
 
 [Here](https://asciinema.org/a/120635)'s an example of how to set up rubomote server.
 
